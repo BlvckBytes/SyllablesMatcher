@@ -29,7 +29,11 @@ public class EnumMatcher<T extends Enum<?>> {
   }
 
   public String getNormalizedName(T enumConstant) {
-    return normalizedConstantByEnumConstant.get(enumConstant).normalizedName;
+    return getNormalizedConstant(enumConstant).normalizedName;
+  }
+
+  public NormalizedConstant<T> getNormalizedConstant(T enumConstant) {
+    return normalizedConstantByEnumConstant.get(enumConstant);
   }
 
   public List<String> createCompletions(@Nullable String input) {
