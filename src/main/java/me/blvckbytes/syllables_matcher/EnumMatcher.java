@@ -25,11 +25,11 @@ public class EnumMatcher<T extends Enum<?>> {
 
     // Sort just like the client would, so that the first match is equal to
     // the first entry in the suggestion-list displayed to the user
-    Arrays.sort(this.normalizedConstants, Comparator.comparing(a -> a.normalizedName));
+    Arrays.sort(this.normalizedConstants, Comparator.comparing(NormalizedConstant::getNormalizedName));
   }
 
   public String getNormalizedName(T enumConstant) {
-    return getNormalizedConstant(enumConstant).normalizedName;
+    return getNormalizedConstant(enumConstant).getNormalizedName();
   }
 
   public NormalizedConstant<T> getNormalizedConstant(T enumConstant) {
@@ -43,7 +43,7 @@ public class EnumMatcher<T extends Enum<?>> {
   public List<String> createCompletions(@Nullable String input, @Nullable EnumPredicate<T> filter) {
     var result = new ArrayList<String>();
 
-    forEachMatch(input, filter, match -> result.add(match.normalizedName));
+    forEachMatch(input, filter, match -> result.add(match.getNormalizedName()));
 
     return result;
   }
@@ -87,7 +87,7 @@ public class EnumMatcher<T extends Enum<?>> {
       if (constantIndex != 0)
         matcher.resetQueryMatches();
 
-      matcher.setTarget(constant.syllables);
+      matcher.setTarget(constant.getSyllables());
       matcher.match();
 
       if (matcher.hasUnmatchedQuerySyllables())
