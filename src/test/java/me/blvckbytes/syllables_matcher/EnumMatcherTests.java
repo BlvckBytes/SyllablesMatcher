@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class EnumMatcherTests {
 
-  enum TestEnum {
+  enum TestEnum implements MatchableEnum {
     FIRST_CONSTANT,
     SECOND_CONSTANT,
     THIRD_CONSTANT,

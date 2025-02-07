@@ -2,7 +2,7 @@ package me.blvckbytes.syllables_matcher;
 
 import java.util.Objects;
 
-public class NormalizedConstant<T extends Enum<?>> {
+public class NormalizedConstant<T extends MatchableEnum> {
 
   public final T constant;
   public final String initialNormalizedName;

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-public class EnumMatcher<T extends Enum<?>> {
+public class EnumMatcher<T extends MatchableEnum> {
 
   private final NormalizedConstant<T>[] normalizedConstants;
   private final Map<T, NormalizedConstant<T>> normalizedConstantByEnumConstant;
