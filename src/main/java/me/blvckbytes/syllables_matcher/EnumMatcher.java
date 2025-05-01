@@ -11,15 +11,16 @@ public class EnumMatcher<T extends MatchableEnum> {
   private final Map<T, NormalizedConstant<T>> normalizedConstantByEnumConstant;
 
   @SuppressWarnings("unchecked")
-  public EnumMatcher(List<T> values) {
+  public EnumMatcher(Collection<T> values) {
     this.normalizedConstants = new NormalizedConstant[values.size()];
     this.normalizedConstantByEnumConstant = new HashMap<>();
 
-    for (var i = 0; i < values.size(); ++i) {
-      var enumConstant = values.get(i);
+    var normalizedConstantsIndex = 0;
+
+    for (var enumConstant : values) {
       var normalizedConstant = new NormalizedConstant<>(enumConstant);
 
-      this.normalizedConstants[i] = normalizedConstant;
+      this.normalizedConstants[normalizedConstantsIndex++] = normalizedConstant;
       this.normalizedConstantByEnumConstant.put(enumConstant, normalizedConstant);
     }
 
