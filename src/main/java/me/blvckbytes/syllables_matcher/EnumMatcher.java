@@ -11,12 +11,12 @@ public class EnumMatcher<T extends MatchableEnum> {
   private final Map<T, NormalizedConstant<T>> normalizedConstantByEnumConstant;
 
   @SuppressWarnings("unchecked")
-  public EnumMatcher(T[] values) {
-    this.normalizedConstants = new NormalizedConstant[values.length];
+  public EnumMatcher(List<T> values) {
+    this.normalizedConstants = new NormalizedConstant[values.size()];
     this.normalizedConstantByEnumConstant = new HashMap<>();
 
-    for (var i = 0; i < values.length; ++i) {
-      var enumConstant = values[i];
+    for (var i = 0; i < values.size(); ++i) {
+      var enumConstant = values.get(i);
       var normalizedConstant = new NormalizedConstant<>(enumConstant);
 
       this.normalizedConstants[i] = normalizedConstant;
@@ -28,6 +28,10 @@ public class EnumMatcher<T extends MatchableEnum> {
     Arrays.sort(this.normalizedConstants, Comparator.comparing(NormalizedConstant::getNormalizedName));
   }
 
+  public EnumMatcher(T[] values) {
+    this(Arrays.asList(values));
+  }
+
   public String getNormalizedName(T enumConstant) {
     return getNormalizedConstant(enumConstant).getNormalizedName();
   }
@@ -37,13 +41,32 @@ public class EnumMatcher<T extends MatchableEnum> {
   }
 
   public List<String> createCompletions(@Nullable String input) {
-    return createCompletions(input, null);
+    return createCompletions(input, null, null, null);
+  }
+
+  public List<String> createCompletions(@Nullable String input, @Nullable String prefix, @Nullable String suffix) {
+    return createCompletions(input, null, prefix, suffix);
   }
 
   public List<String> createCompletions(@Nullable String input, @Nullable EnumPredicate<T> filter) {
+    return createCompletions(input, filter, null, null);
+  }
+
+  public List<String> createCompletions(@Nullable String input, @Nullable EnumPredicate<T> filter, String prefix, String suffix) {
     var result = new ArrayList<String>();
 
-    forEachMatch(input, filter, match -> result.add(match.getNormalizedName()));
+    forEachMatch(input, filter, match -> {
+      var name = match.getNormalizedName();
+
+      if (prefix != null)
+        name = prefix + name;
+
+      if (suffix != null)
+        name = name + suffix;
+
+      result.add(name);
+      return true;
+    });
 
     return result;
   }
@@ -62,12 +85,12 @@ public class EnumMatcher<T extends MatchableEnum> {
     Function<NormalizedConstant<T>, Boolean> matchHandler
   ) {
     if (input == null) {
-      for (var translationLanguage : normalizedConstants) {
-        if (filter != null && !filter.test(translationLanguage))
+      for (var normalizedConstant : normalizedConstants) {
+        if (filter != null && !filter.test(normalizedConstant))
           continue;
 
-        if (!matchHandler.apply(translationLanguage))
-          return translationLanguage;
+        if (!matchHandler.apply(normalizedConstant))
+          return normalizedConstant;
       }
 
       return null;
