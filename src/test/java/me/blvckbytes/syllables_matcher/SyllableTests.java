@@ -67,7 +67,7 @@ public class SyllableTests {
   @Test
   public void shouldHandleMultipleTargetsWithoutQueryMatchesResetting() {
     var querySyllables = Syllables.forString("dia-bot-car-ir-gol", Syllables.DELIMITER_SEARCH_PATTERN);
-    assertFalse(querySyllables.isWildcardMode());
+    assertEquals(WildcardMode.NONE, querySyllables.getWildcardMode());
 
     var matcher = new SyllablesMatcher();
     matcher.setQuery(querySyllables);
@@ -132,7 +132,7 @@ public class SyllableTests {
     var query = Syllables.forString("hell-diam-gol", Syllables.DELIMITER_SEARCH_PATTERN);
     var sprinkles = new String[] { "hello", "diamond", "gold" };
 
-    assertFalse(query.isWildcardMode());
+    assertEquals(WildcardMode.NONE, query.getWildcardMode());
 
     var target = Syllables.forString(
       makeFillerSyllableSequence(new String[] { "hell", "diam", "gol" }, sprinkles),
@@ -159,7 +159,7 @@ public class SyllableTests {
   @Test
   public void shouldHandleMultipleQueries() {
     var targetSyllables = Syllables.forString("one-two-three-four", Syllables.DELIMITER_SEARCH_PATTERN);
-    assertFalse(targetSyllables.isWildcardMode());
+    assertEquals(WildcardMode.NONE, targetSyllables.getWildcardMode());
 
     var matcher = new SyllablesMatcher();
     matcher.setTarget(targetSyllables);
@@ -204,7 +204,7 @@ public class SyllableTests {
   @Test
   public void shouldHandleMultipleTargetsWithQueryMatchesResetting() {
     var querySyllables = Syllables.forStringWithWildcardSupport("dia-ax-?", Syllables.DELIMITER_SEARCH_PATTERN).syllables();
-    assertTrue(querySyllables.isWildcardMode());
+    assertEquals(WildcardMode.EXCLUDING_EXACT_MATCH, querySyllables.getWildcardMode());
 
     var matcher = new SyllablesMatcher();
     matcher.setQuery(querySyllables);
@@ -264,7 +264,7 @@ public class SyllableTests {
   @Test
   public void shouldHandlePositiveMatches() {
     makeUnmatchedCase(
-      "HELLO,-WORLD", "he-orld", false,
+      "HELLO,-WORLD", "he-orld", WildcardMode.NONE,
       new Syllables(null)
         .add(2, 5, false)
         .add(7, 7, false),
@@ -272,7 +272,7 @@ public class SyllableTests {
     );
 
     makeUnmatchedCase(
-      "Diamantbrustplatte", "dia-brus", false,
+      "Diamantbrustplatte", "dia-brus", WildcardMode.NONE,
       new Syllables(null)
         .add(3, 6, false)
         .add(11, 17, false),
@@ -280,7 +280,7 @@ public class SyllableTests {
     );
 
     makeUnmatchedCase(
-      "Diamantbrustplatte", "gold-brus", false,
+      "Diamantbrustplatte", "gold-brus", WildcardMode.NONE,
       new Syllables(null)
         .add(0, 6, false)
         .add(11, 17, false),
@@ -292,7 +292,7 @@ public class SyllableTests {
   @Test
   public void shouldHandleNegativeMatches() {
     makeUnmatchedCase(
-      "Diamantbrustplatte", "!dia-brus", false,
+      "Diamantbrustplatte", "!dia-brus", WildcardMode.NONE,
       new Syllables(null)
         .add(3, 6, false)
         .add(11, 17, false),
@@ -301,7 +301,7 @@ public class SyllableTests {
     );
 
     makeUnmatchedCase(
-      "Red-Wool", "!re-wo", false,
+      "Red-Wool", "!re-wo", WildcardMode.NONE,
       new Syllables(null)
         .add(2, 2, false)
         .add(6, 7, false),
@@ -313,7 +313,7 @@ public class SyllableTests {
   @Test
   public void shouldHandleMatchingOnReminders() {
     makeUnmatchedCase(
-      "Diamantbrustplatte", "dia-bru-man-pla", false,
+      "Diamantbrustplatte", "dia-bru-man-pla", WildcardMode.NONE,
       new Syllables(null)
         .add(6, 6, false)
         .add(10, 11, false)
@@ -325,29 +325,38 @@ public class SyllableTests {
   @Test
   public void shouldHandleWildcardMatches() {
     makeUnmatchedCase(
-      "Oak-Sign", "sign-?", true,
+      "Oak-Sign", "sign-?", WildcardMode.EXCLUDING_EXACT_MATCH,
       new Syllables(null)
         .add(0, 2, false),
       EMPTY_SYLLABLES
     );
 
-    SyllablesAndCounters result;
+    makeUnmatchedCase(
+      "Oak-Sign", "sign-*", WildcardMode.INCLUDING_EXACT_MATCH,
+      new Syllables(null)
+        .add(0, 2, false),
+      EMPTY_SYLLABLES
+    );
 
-    result = Syllables.forStringWithWildcardSupport("?", Syllables.DELIMITER_SEARCH_PATTERN);
-    assertEquals(1, result.numberOfWildcardSyllables());
-    assertEquals(0, result.numberOfNonWildcardSyllables());
+    for (char wildcard : new char[] { '?', '*' }) {
+      SyllablesAndCounters result;
 
-    result = Syllables.forStringWithWildcardSupport("?-?", Syllables.DELIMITER_SEARCH_PATTERN);
-    assertEquals(2, result.numberOfWildcardSyllables());
-    assertEquals(0, result.numberOfNonWildcardSyllables());
+      result = Syllables.forStringWithWildcardSupport("" + wildcard, Syllables.DELIMITER_SEARCH_PATTERN);
+      assertEquals(1, result.numberOfWildcardSyllables());
+      assertEquals(0, result.numberOfNonWildcardSyllables());
 
-    result = Syllables.forStringWithWildcardSupport("?-hello", Syllables.DELIMITER_SEARCH_PATTERN);
-    assertEquals(1, result.numberOfWildcardSyllables());
-    assertEquals(1, result.numberOfNonWildcardSyllables());
+      result = Syllables.forStringWithWildcardSupport(wildcard + "-" + wildcard, Syllables.DELIMITER_SEARCH_PATTERN);
+      assertEquals(2, result.numberOfWildcardSyllables());
+      assertEquals(0, result.numberOfNonWildcardSyllables());
 
-    result = Syllables.forStringWithWildcardSupport("?-?-hello", Syllables.DELIMITER_SEARCH_PATTERN);
-    assertEquals(2, result.numberOfWildcardSyllables());
-    assertEquals(1, result.numberOfNonWildcardSyllables());
+      result = Syllables.forStringWithWildcardSupport(wildcard +"-hello", Syllables.DELIMITER_SEARCH_PATTERN);
+      assertEquals(1, result.numberOfWildcardSyllables());
+      assertEquals(1, result.numberOfNonWildcardSyllables());
+
+      result = Syllables.forStringWithWildcardSupport(wildcard + "-" + wildcard + "-hello", Syllables.DELIMITER_SEARCH_PATTERN);
+      assertEquals(2, result.numberOfWildcardSyllables());
+      assertEquals(1, result.numberOfNonWildcardSyllables());
+    }
   }
 
   @Test
@@ -357,13 +366,13 @@ public class SyllableTests {
     var coloredString = "§aH§be§cl§dl§eo-§fW§0o§1r§2l§3d-§4T§5e§6s§7t§8i§9n§m§ag-§ncolo§krs-§r:)";
 
     makeUnmatchedCase(
-      coloredString, "hello-world-testing-colors-:)", false,
+      coloredString, "hello-world-testing-colors-:)", WildcardMode.NONE,
       EMPTY_SYLLABLES,
       EMPTY_SYLLABLES
     );
 
     makeUnmatchedCase(
-      coloredString, "testing", false,
+      coloredString, "testing", WildcardMode.NONE,
       new Syllables(null)
         .add(0, 14, false)
         .add(16, 30, false)
@@ -378,7 +387,7 @@ public class SyllableTests {
     var coloredString = "§x§F§F§0§0§0§0h§x§F§F§5§F§0§0e§x§F§F§B§F§0§0l§x§D§F§F§F§0§0l§x§7§F§F§F§0§0o§x§1§F§F§F§0§0,§x§0§0§F§F§3§F-§x§0§0§F§F§9§Fw§x§0§0§F§F§F§Fo§x§0§0§9§F§F§Fr§x§0§0§3§F§F§Fl§x§1§F§0§0§F§Fd§x§7§F§0§0§F§F!§x§D§F§0§0§F§F-§x§F§F§0§0§B§F:§x§F§F§0§0§5§F)";
 
     makeUnmatchedCase(
-      coloredString, "hello,-world!-:)", false,
+      coloredString, "hello,-world!-:)", WildcardMode.NONE,
       EMPTY_SYLLABLES,
       EMPTY_SYLLABLES
     );
@@ -389,7 +398,7 @@ public class SyllableTests {
     var coloredString = "§c§l§kHello-world";
 
     makeUnmatchedCase(
-      coloredString, "hello-world", false,
+      coloredString, "hello-world", WildcardMode.NONE,
       EMPTY_SYLLABLES,
       EMPTY_SYLLABLES
     );
@@ -400,7 +409,7 @@ public class SyllableTests {
     var coloredString = "§x§F§F§0§0§0§0§x§0§0§F§F§0§0§x§0§0§0§0§F§FHello-world";
 
     makeUnmatchedCase(
-      coloredString, "hello-world", false,
+      coloredString, "hello-world", WildcardMode.NONE,
       EMPTY_SYLLABLES,
       EMPTY_SYLLABLES
     );
@@ -413,7 +422,7 @@ public class SyllableTests {
       .add(8, 10, false);
 
     var matcher = makeUnmatchedCase(
-      "abcdefghijk", "ab-gh", false,
+      "abcdefghijk", "ab-gh", WildcardMode.NONE,
       remainingTargetSyllables,
       EMPTY_SYLLABLES
     );
@@ -515,7 +524,7 @@ public class SyllableTests {
   }
 
   private SyllablesMatcher makeUnmatchedCase(
-    String target, String query, boolean queryContainsWildcard,
+    String target, String query, WildcardMode wildcardMode,
     Syllables expectedUnmatchedTargetSyllables,
     Syllables expectedUnmatchedQuerySyllables
   ) {
@@ -523,7 +532,7 @@ public class SyllableTests {
 
     Syllables querySyllables;
 
-    if (queryContainsWildcard)
+    if (wildcardMode != WildcardMode.NONE)
       querySyllables = Syllables.forStringWithWildcardSupport(query, Syllables.DELIMITER_SEARCH_PATTERN).syllables();
     else
       querySyllables = Syllables.forString(query, Syllables.DELIMITER_SEARCH_PATTERN);
@@ -531,7 +540,7 @@ public class SyllableTests {
     matcher.setTarget(Syllables.forString(target, Syllables.DELIMITER_SEARCH_PATTERN));
     matcher.setQuery(querySyllables);
 
-    assertEquals(queryContainsWildcard, querySyllables.isWildcardMode());
+    assertEquals(wildcardMode, querySyllables.getWildcardMode());
 
     matcher.match();
 

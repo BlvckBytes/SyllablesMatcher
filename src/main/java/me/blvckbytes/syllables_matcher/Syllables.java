@@ -5,7 +5,8 @@ public class Syllables {
   public static final char DELIMITER_SEARCH_PATTERN = '-';
   public static final char DELIMITER_FREE_TEXT      = ' ';
 
-  private static final char PATTERN_WILDCARD_CHAR = '?';
+  private static final char PATTERN_WILDCARD_CHAR_EXCLUDING_EXACT = '?';
+  private static final char PATTERN_WILDCARD_CHAR_INCLUDING_EXACT = '*';
   private static final char PATTERN_NEGATION_CHAR = '!';
 
   private static final int INITIAL_CAPACITY = 32;
@@ -19,10 +20,11 @@ public class Syllables {
   private int size;
 
   public String container;
-  private boolean wildcardMode;
+  private WildcardMode wildcardMode;
 
   public Syllables(String container) {
     this.container = container;
+    this.wildcardMode = WildcardMode.NONE;
     this.syllables = new int[INITIAL_CAPACITY];
   }
 
@@ -42,7 +44,7 @@ public class Syllables {
     return this;
   }
 
-  public boolean isWildcardMode() {
+  public WildcardMode getWildcardMode() {
     return this.wildcardMode;
   }
 
@@ -117,9 +119,14 @@ public class Syllables {
           ++numberOfNonWildcardSyllables;
         }
 
-        else if (supportsWildcard && nextPartBeginning == partEnd && firstChar == PATTERN_WILDCARD_CHAR) {
+        else if (supportsWildcard && nextPartBeginning == partEnd && firstChar == PATTERN_WILDCARD_CHAR_EXCLUDING_EXACT) {
           ++numberOfWildcardSyllables;
-          result.wildcardMode = true;
+          result.wildcardMode = WildcardMode.EXCLUDING_EXACT_MATCH;
+        }
+
+        else if (supportsWildcard && nextPartBeginning == partEnd && firstChar == PATTERN_WILDCARD_CHAR_INCLUDING_EXACT) {
+          ++numberOfWildcardSyllables;
+          result.wildcardMode = WildcardMode.INCLUDING_EXACT_MATCH;
         }
 
         else {
