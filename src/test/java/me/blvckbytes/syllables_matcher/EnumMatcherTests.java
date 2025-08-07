@@ -3,10 +3,12 @@ package me.blvckbytes.syllables_matcher;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class EnumMatcherTests {
 
@@ -127,10 +129,31 @@ public class EnumMatcherTests {
         normalizedConstant.constant == TestEnum.AA
       )
     );
-    assertEquals(TestEnum.AAC, Objects.requireNonNull(result).constant);
+    assertEquals(TestEnum.AB, Objects.requireNonNull(result).constant);
+  }
+
+  enum MyEnum implements MatchableEnum {
+    PRICE,
+    MIN_PRICE,
+    MAX_PRICE
+    ;
+
+    private static final EnumMatcher<MyEnum> matcher = new EnumMatcher<>(values());
+  }
+
+  @Test
+  public void shouldChooseExactMatch() {
+    var result = MyEnum.matcher.matchFirst("Price");
+
+    assertNotNull(result);
+    assertEquals(MyEnum.PRICE, result.constant);
   }
 
   private List<String> sortedStrings(String... values) {
-    return Arrays.stream(values).sorted().toList();
+    return Arrays.stream(values).sorted(
+      Comparator
+        .comparingInt(String::length)
+        .thenComparing(value -> value)
+    ).toList();
   }
 }

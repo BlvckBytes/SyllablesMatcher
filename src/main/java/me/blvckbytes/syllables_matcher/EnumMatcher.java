@@ -24,9 +24,11 @@ public class EnumMatcher<T extends MatchableEnum> {
       this.normalizedConstantByEnumConstant.put(enumConstant, normalizedConstant);
     }
 
-    // Sort just like the client would, so that the first match is equal to
-    // the first entry in the suggestion-list displayed to the user
-    Arrays.sort(this.normalizedConstants, Comparator.comparing(NormalizedConstant::getNormalizedName));
+    // Let's deviate from client sorting, as shortest matches should take precedence.
+    // Otherwise, undesirable scenarios arise.
+    Arrays.sort(this.normalizedConstants, Comparator
+      .comparingInt((NormalizedConstant<T> a) -> a.getNormalizedName().length())
+      .thenComparing(NormalizedConstant::getNormalizedName));
   }
 
   public EnumMatcher(T[] values) {
