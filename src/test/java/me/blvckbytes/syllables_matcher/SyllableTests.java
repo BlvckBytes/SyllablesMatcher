@@ -1,6 +1,7 @@
 package me.blvckbytes.syllables_matcher;
 
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -405,6 +406,18 @@ public class SyllableTests {
   }
 
   @Test
+  public void shouldNotThrowOnSpecialCaseColorValues() {
+    Assertions.assertDoesNotThrow(() -> {
+      setupMatcher(
+        "§6■ §x§F§B§F§7§D§0Tier: §x§7§1§A§D§0§0§lE§x§5§F§A§4§0§7§lm§x§4§C§9§A§0§E§le§x§3§A§9§1§1§6§lr§x§2§8§8§7§1§D§la§x§1§5§7§E§2§4§ll§x§0§3§7§4§2§B§ld §x§0§0§6§7§B§8§lS§x§0§A§7§8§C§2§lh§x§1§5§8§9§C§B§lo§x§2§E§9§B§D§9§lr§x§5§5§B§0§E§C§le§x§7§C§C§5§F§F§ls",
+        "artifact shard",
+        WildcardMode.NONE,
+        Syllables.DELIMITER_FREE_TEXT
+      );
+    });
+  }
+
+  @Test
   public void shouldIgnoreConsecutiveHexColorSequences() {
     var coloredString = "§x§F§F§0§0§0§0§x§0§0§F§F§0§0§x§0§0§0§0§F§FHello-world";
 
@@ -523,26 +536,32 @@ public class SyllableTests {
     return result.toString();
   }
 
-  private SyllablesMatcher makeUnmatchedCase(
-    String target, String query, WildcardMode wildcardMode,
-    Syllables expectedUnmatchedTargetSyllables,
-    Syllables expectedUnmatchedQuerySyllables
-  ) {
+  private SyllablesMatcher setupMatcher(String target, String query, WildcardMode wildcardMode, char delimiter) {
     var matcher = new SyllablesMatcher();
 
     Syllables querySyllables;
 
     if (wildcardMode != WildcardMode.NONE)
-      querySyllables = Syllables.forStringWithWildcardSupport(query, Syllables.DELIMITER_SEARCH_PATTERN).syllables();
+      querySyllables = Syllables.forStringWithWildcardSupport(query, delimiter).syllables();
     else
-      querySyllables = Syllables.forString(query, Syllables.DELIMITER_SEARCH_PATTERN);
+      querySyllables = Syllables.forString(query, delimiter);
 
-    matcher.setTarget(Syllables.forString(target, Syllables.DELIMITER_SEARCH_PATTERN));
+    matcher.setTarget(Syllables.forString(target, delimiter));
     matcher.setQuery(querySyllables);
 
     assertEquals(wildcardMode, querySyllables.getWildcardMode());
 
     matcher.match();
+
+    return matcher;
+  }
+
+  private SyllablesMatcher makeUnmatchedCase(
+    String target, String query, WildcardMode wildcardMode,
+    Syllables expectedUnmatchedTargetSyllables,
+    Syllables expectedUnmatchedQuerySyllables
+  ) {
+    var matcher = setupMatcher(target, query, wildcardMode, Syllables.DELIMITER_SEARCH_PATTERN);
 
     assertUnmatchedSyllablesInAnyOrder(matcher, true, expectedUnmatchedQuerySyllables);
     assertUnmatchedSyllablesInAnyOrder(matcher, false, expectedUnmatchedTargetSyllables);

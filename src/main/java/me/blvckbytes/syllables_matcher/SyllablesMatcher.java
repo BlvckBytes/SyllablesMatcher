@@ -239,13 +239,16 @@ public class SyllablesMatcher {
   }
 
   /**
-   * @return Length of color-sequence at that position, zero if there is none
+   * @return Length of color-sequence at that position, zero if there is none, -1 if position is out-of-range
    */
   private int isColorSequence(String input, int position, int lastPosition) {
+    var remainingCharacters = lastPosition - position + 1;
+
+    if (remainingCharacters <= 0)
+      return -1;
+
     if (input.charAt(position) != '§')
       return 0;
-
-    var remainingCharacters = lastPosition - position + 1;
 
     // Need to have at least two characters to be a color-sequence
     if (remainingCharacters == 1)
@@ -336,10 +339,13 @@ public class SyllablesMatcher {
 
         int colorSequenceLength;
 
-        while ((colorSequenceLength = isColorSequence(target.container, targetIndex, targetSyllableEnd)) != 0) {
+        while ((colorSequenceLength = isColorSequence(target.container, targetIndex, targetSyllableEnd)) > 0) {
           targetOffset += colorSequenceLength;
           targetIndex += colorSequenceLength;
         }
+
+        if (colorSequenceLength < 0)
+          break;
 
         var targetChar = target.container.charAt(targetIndex);
         var containedChar = query.container.charAt(queryIndex);
