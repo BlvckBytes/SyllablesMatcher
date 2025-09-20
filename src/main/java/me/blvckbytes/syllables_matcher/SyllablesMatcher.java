@@ -327,7 +327,7 @@ public class SyllablesMatcher {
     // TODO: Can this algorithm still be improved?
 
     for (int targetOffset = 0; targetOffset <= highestOffset; ++targetOffset) {
-      boolean didMatch = true;
+      TriState didMatch = TriState.NULL;
 
       // As color-sequences are skipped on the outer-loop's counter, keep an internal
       // backup to respond the very front of the match, including said sequences.
@@ -351,12 +351,14 @@ public class SyllablesMatcher {
         var containedChar = query.container.charAt(queryIndex);
 
         if (charToLower(targetChar) != charToLower(containedChar)) {
-          didMatch = false;
+          didMatch = TriState.FALSE;
           break;
         }
+
+        didMatch = TriState.TRUE;
       }
 
-      if (didMatch) {
+      if (didMatch == TriState.TRUE) {
         var numberOfTargetChars = targetOffset - initialTargetOffset + querySyllableLength;
         return ((long) initialTargetOffset) << 16 | numberOfTargetChars;
       }

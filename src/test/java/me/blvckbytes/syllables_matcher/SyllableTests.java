@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -415,6 +416,34 @@ public class SyllableTests {
         Syllables.DELIMITER_FREE_TEXT
       );
     });
+  }
+
+  @Test
+  public void shouldNotMatchOnEmptySyllablesContainingOnlyColor() {
+    var targetSyllables = Syllables.forString("§6■ §x§D§B§E§A§F§FAlso gives §x§F§B§F§7§D§0+1 fruit drop§x§D§B§E§A§F§F for", Syllables.DELIMITER_FREE_TEXT);
+
+    var querySyllables = Syllables.forString("artifact shard", Syllables.DELIMITER_FREE_TEXT);
+    var syllablesMatcher = new SyllablesMatcher();
+
+    syllablesMatcher.setQuery(querySyllables);
+    syllablesMatcher.setTarget(targetSyllables);
+
+    var beforeCounter = new AtomicInteger();
+
+    syllablesMatcher.forEachUnmatchedQuerySyllable((holder, syllable) -> {
+      beforeCounter.incrementAndGet();
+    });
+
+    syllablesMatcher.match();
+
+    var afterCounter = new AtomicInteger();
+
+    syllablesMatcher.forEachUnmatchedQuerySyllable((holder, syllable) -> {
+      afterCounter.incrementAndGet();
+    });
+
+    assertEquals(2, beforeCounter.get());
+    assertEquals(2, afterCounter.get());
   }
 
   @Test
