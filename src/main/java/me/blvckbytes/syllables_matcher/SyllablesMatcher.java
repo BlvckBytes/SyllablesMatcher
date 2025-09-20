@@ -123,9 +123,12 @@ public class SyllablesMatcher {
     );
   }
 
-  public void match() {
+  @SuppressWarnings("UnusedReturnValue")
+  public int match() {
     if (query == null || target == null)
       throw new IllegalStateException("Cannot match on a missing query and or a missing target");
+
+    var matchCount = 0;
 
     for (var querySyllableIndex = 0; querySyllableIndex < query.size(); ++querySyllableIndex) {
       if (isMarkedAsMatched(queryMatchedFlags, querySyllableIndex))
@@ -144,13 +147,18 @@ public class SyllablesMatcher {
           continue;
 
         markAsMatched(queryMatchedFlags, querySyllableIndex);
+        ++matchCount;
         continue;
       }
 
       // Remove negated query substrings which didn't find a match, as to allow the result to become a match
-      if (Syllables.isNegated(querySyllable))
+      if (Syllables.isNegated(querySyllable)) {
         markAsMatched(queryMatchedFlags, querySyllableIndex);
+        ++matchCount;
+      }
     }
+
+    return matchCount;
   }
 
   private void forEachUnmatched(Syllables syllables, long[] matchedFlags, UnmatchedSyllableConsumer consumer) {
