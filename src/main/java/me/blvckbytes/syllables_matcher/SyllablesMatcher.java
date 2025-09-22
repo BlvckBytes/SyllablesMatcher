@@ -232,7 +232,7 @@ public class SyllablesMatcher {
     // Mini-Message's *ingenious* parser colors whitespace on - for example - rainbows, thus we
     // need to check for whether the syllable is just made up of a color-sequence, as to not
     // have matches fail because of dangling colors.
-    if (isColorSequence(target.container, start, end) == (end - start + 1))
+    if (consumeColorSequencesAndGetLength(target.container, start, end) == (end - start + 1))
       return;
 
     targetRemainders.add(start, end, false);
@@ -246,63 +246,26 @@ public class SyllablesMatcher {
     }
   }
 
-  /**
-   * @return Length of color-sequence at that position, zero if there is none, -1 if position is out-of-range
-   */
-  private int isColorSequence(String input, int position, int lastPosition) {
-    var remainingCharacters = lastPosition - position + 1;
+  private int consumeColorSequencesAndGetLength(String input, int position, int lastPosition) {
+    // § is a reserved character, thus just greedily consume as many such subsequent
+    // sequences as possible, no matter whether malformed or not; it's just not worth
+    // going through all the case-decisions.
 
-    if (remainingCharacters <= 0)
-      return -1;
+    var initialPosition = position;
 
-    if (input.charAt(position) != '§')
-      return 0;
-
-    // Need to have at least two characters to be a color-sequence
-    if (remainingCharacters == 1)
-      return 0;
-
-    var nextContainerChar = input.charAt(position + 1);
-
-    // Standard color-sequences
-    if (
-      (nextContainerChar >= '0' && nextContainerChar <= '9') ||
-      (nextContainerChar >= 'a' && nextContainerChar <= 'f') ||
-      (nextContainerChar >= 'k' && nextContainerChar <= 'o') ||
-      nextContainerChar == 'r'
-    ) {
-      return 2;
-    }
-
-    // Hex color-sequences of format §x§<R>§<R>§<G>§<G>§<B>§<B>
-    if (nextContainerChar == 'x' && remainingCharacters >= 2 + 6 * 2) {
-      var matchesSequence = true;
-
-      for (var i = 1; i <= 6 * 2; i += 2) {
-        var paragraphChar = input.charAt(position + 1 + i);
-        var hexColorChar = input.charAt(position + 1 + (i + 1));
-
-        if (
-          paragraphChar == '§' &&
-          (
-            Character.isDigit(hexColorChar) ||
-            (hexColorChar >= 'a' && hexColorChar <= 'f') ||
-            (hexColorChar >= 'A' && hexColorChar <= 'F')
-          )
-        ) {
-          continue;
-        }
-
-        matchesSequence = false;
+    while (lastPosition - position + 1 >= 2) {
+      if (input.charAt(position) != '§')
         break;
-      }
 
-      if (matchesSequence)
-        return 2 + 6 * 2;
+      char c = input.charAt(position + 1);
+
+      if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= 'k' && c <= 'o') || c == 'r' || c == 'x'))
+        break;
+
+      position += 2;
     }
 
-    // Not a color-sequence of any known scheme
-    return 0;
+    return position - initialPosition;
   }
 
   /**
@@ -345,15 +308,15 @@ public class SyllablesMatcher {
         var targetIndex = targetSyllableStart + queryOffset + targetOffset;
         var queryIndex = querySyllableStart + queryOffset;
 
-        int colorSequenceLength;
+        var colorSequenceLength = consumeColorSequencesAndGetLength(target.container, targetIndex, targetSyllableEnd);
 
-        while ((colorSequenceLength = isColorSequence(target.container, targetIndex, targetSyllableEnd)) > 0) {
-          targetOffset += colorSequenceLength;
-          targetIndex += colorSequenceLength;
-        }
+        targetOffset += colorSequenceLength;
+        targetIndex += colorSequenceLength;
 
-        if (colorSequenceLength < 0)
+        if (targetIndex > targetSyllableEnd) {
+          didMatch = TriState.FALSE;
           break;
+        }
 
         var targetChar = target.container.charAt(targetIndex);
         var containedChar = query.container.charAt(queryIndex);
