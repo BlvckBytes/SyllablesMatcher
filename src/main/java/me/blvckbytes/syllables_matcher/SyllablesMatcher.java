@@ -23,8 +23,10 @@ public class SyllablesMatcher {
   static {
     int n = 0;
 
-    while (n != 128)
-      RAPID_LOWERCASE_CACHE[n++] = Character.toLowerCase((char) n);
+    while (n != RAPID_LOWERCASE_CACHE.length) {
+      RAPID_LOWERCASE_CACHE[n] = Character.toLowerCase((char) n);
+      ++n;
+    }
   }
 
   private final Syllables targetRemainders;
@@ -368,7 +370,7 @@ public class SyllablesMatcher {
   }
 
   private static char charToLower(char c) {
-    if (c <= '\u007f')
+    if (c < RAPID_LOWERCASE_CACHE.length)
       return RAPID_LOWERCASE_CACHE[c];
 
     return Character.toLowerCase(c);

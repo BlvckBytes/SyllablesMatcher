@@ -488,6 +488,18 @@ public class SyllableTests {
     );
   }
 
+  @Test
+  public void shouldMatchCaseInsensitively() {
+    var matcher = setupMatcher(
+      "Zuckerrohr",
+      "zucker",
+      WildcardMode.NONE,
+      '-'
+    );
+
+    assertFalse(matcher.hasUnmatchedQuerySyllables());
+  }
+
   private String stripSprinkles(String input, String[] sprinkles) {
     var result = input;
 
