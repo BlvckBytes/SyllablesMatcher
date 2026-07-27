@@ -500,6 +500,18 @@ public class SyllableTests {
     assertFalse(matcher.hasUnmatchedQuerySyllables());
   }
 
+  @Test
+  public void shouldMatchAccentInsensitively() {
+    var matcher = setupMatcher(
+      "Épée-en-netherite",
+      "epee-en-netherite",
+      WildcardMode.NONE,
+      '-'
+    );
+
+    assertFalse(matcher.hasUnmatchedQuerySyllables());
+  }
+
   private String stripSprinkles(String input, String[] sprinkles) {
     var result = input;
 

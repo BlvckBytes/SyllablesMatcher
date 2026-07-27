@@ -1,5 +1,7 @@
 package me.blvckbytes.syllables_matcher;
 
+import java.text.Normalizer;
+
 public class Syllables {
 
   public static final char DELIMITER_SEARCH_PATTERN = '-';
@@ -13,6 +15,18 @@ public class Syllables {
   private static final int BIT_IS_NEGATED   = (1 << 1);
   private static final int START_END_MASK   = 32768 - 1;
 
+  private static final char[] RAPID_LOWERCASE_CACHE = new char[128];
+
+  static {
+    int n = 0;
+
+    while (n != RAPID_LOWERCASE_CACHE.length) {
+      RAPID_LOWERCASE_CACHE[n] = Character.toLowerCase((char) n);
+      ++n;
+    }
+  }
+
+
   /*
     <15b start><15b end><1b is_negated><1b unused>
    */
@@ -23,7 +37,7 @@ public class Syllables {
   private WildcardMode wildcardMode;
 
   public Syllables(String container) {
-    this.container = container;
+    this.container = stripDiacriticalMarksAndLower(container);
     this.wildcardMode = WildcardMode.NONE;
     this.syllables = new int[INITIAL_CAPACITY];
   }
@@ -140,5 +154,31 @@ public class Syllables {
     }
 
     return new SyllablesAndCounters(result, numberOfWildcardSyllables, numberOfNonWildcardSyllables);
+  }
+
+  private static String stripDiacriticalMarksAndLower(String input) {
+    if (input == null)
+      return null;
+
+    var normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+    var resultBuilder = new StringBuilder(normalized.length());
+
+    for (var index = 0; index < normalized.length(); index++) {
+      var currentChar = normalized.charAt(index);
+
+      if (Character.getType(currentChar) == Character.NON_SPACING_MARK)
+        continue;
+
+      resultBuilder.append(charToLower(currentChar));
+    }
+
+    return resultBuilder.toString();
+  }
+
+  private static char charToLower(char c) {
+    if (c < RAPID_LOWERCASE_CACHE.length)
+      return RAPID_LOWERCASE_CACHE[c];
+
+    return Character.toLowerCase(c);
   }
 }

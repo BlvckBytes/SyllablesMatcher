@@ -18,17 +18,6 @@ public class SyllablesMatcher {
     enough to support unrestricted use of the parser; that's why arrays are required!
    */
 
-  private static final char[] RAPID_LOWERCASE_CACHE = new char[128];
-
-  static {
-    int n = 0;
-
-    while (n != RAPID_LOWERCASE_CACHE.length) {
-      RAPID_LOWERCASE_CACHE[n] = Character.toLowerCase((char) n);
-      ++n;
-    }
-  }
-
   private final Syllables targetRemainders;
   private long[] targetRemaindersMatchedFlags;
 
@@ -323,7 +312,7 @@ public class SyllablesMatcher {
         var targetChar = target.container.charAt(targetIndex);
         var containedChar = query.container.charAt(queryIndex);
 
-        if (charToLower(targetChar) != charToLower(containedChar)) {
+        if (targetChar != containedChar) {
           didMatch = TriState.FALSE;
           break;
         }
@@ -367,12 +356,5 @@ public class SyllablesMatcher {
       return 1;
 
     return (numberOfItems + (Long.SIZE - 1)) / Long.SIZE;
-  }
-
-  private static char charToLower(char c) {
-    if (c < RAPID_LOWERCASE_CACHE.length)
-      return RAPID_LOWERCASE_CACHE[c];
-
-    return Character.toLowerCase(c);
   }
 }
