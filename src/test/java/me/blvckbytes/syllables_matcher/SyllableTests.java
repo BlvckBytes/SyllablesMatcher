@@ -510,6 +510,24 @@ public class SyllableTests {
     );
 
     assertFalse(matcher.hasUnmatchedQuerySyllables());
+
+    matcher = setupMatcher(
+      "Pêche",
+      "Peche",
+      WildcardMode.NONE,
+      '-'
+    );
+
+    assertFalse(matcher.hasUnmatchedQuerySyllables());
+
+    matcher = setupMatcher(
+      "Émeraude",
+      "Emeraude",
+      WildcardMode.NONE,
+      '-'
+    );
+
+    assertFalse(matcher.hasUnmatchedQuerySyllables());
   }
 
   private String stripSprinkles(String input, String[] sprinkles) {
